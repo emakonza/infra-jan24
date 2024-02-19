@@ -1,45 +1,46 @@
 pipeline {
     agent any
-   
+
     environment {
         AWS_ACCESS_KEY_ID = credentials('evi_AWS_ACCESS_KEY_ID')
         AWS_SECRET_ACCESS_KEY = credentials('evi_AWS_SECRET_ACCESS_KEY')
-        AWS_DEFAULT_REGION = "us-east-1"
+        AWS_DEFAULT_REGION = "eu-west-2"
     }
+
     stages {
         stage('Checkout') {
             steps {
-           git branch: 'main', url: 'https://github.com/emakonza/infra-jan24.git'
-  
+                git branch: 'main', url: 'https://github.com/emakonza/infra-jan24.git'
             }
         }
-    
-        stage ("terraform init") {
+
+        stage("terraform init") {
             steps {
                 sh "terraform init" 
             }
         }
-  
-        stage ("plan") {
+
+        stage("plan") {
             steps {
                 sh "terraform plan" 
             }
         }
-        stage (" Action") {
+
+        stage("Action") {
             steps {
-                sh 'terraform ${action} --auto-approve' 
-           }
+                // Make sure `action` is defined somewhere
+                sh "terraform ${action} --auto-approve" 
+            }
         }
+
         stage("Deploy to EKS") {
             when {
-               expression { params.apply }
+                expression { params.apply }
             }
             steps {
-                  sh "aws eks update-kubeconfig --name eks_cluster"
-                   sh "kubectl apply -f deployment.yml"
-             }
+                sh "aws eks update-kubeconfig --name eks_cluster"
+                sh "kubectl apply -f deployment.yml"
+            }
         }
     }
 }
-   
-    
